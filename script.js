@@ -5,12 +5,15 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Tamaño y velocidad de los objetos
-const paddleWidth = 10;
-const paddleHeight = 100;
-const ballSize = 10;
-const paddleSpeed = 9;
-let ballSpeed = 10;
+// Verificar si el dispositivo es móvil
+const isMobile = window.innerWidth < 768; // Puedes ajustar el valor según necesites
+
+// Tamaño y velocidad de los objetos según el dispositivo
+const paddleWidth = isMobile ? 4 : 10;
+const paddleHeight = isMobile ? 70 : 100;
+const ballSize = isMobile ? 8 : 10;
+const paddleSpeed = isMobile ? 6 : 9;
+let ballSpeed = isMobile ? 7 : 10;
 
 let leftPaddle = {
     x: 10,
