@@ -195,6 +195,36 @@ function moveBot() {
     }
 }
 
+// Función para manejar el movimiento táctil
+if (isMobile) {
+    let touchStartY;
+
+    canvas.addEventListener('touchstart', (event) => {
+        touchStartY = event.touches[0].clientY;
+    });
+
+    canvas.addEventListener('touchmove', (event) => {
+        const touchY = event.touches[0].clientY;
+        const touchDy = touchY - touchStartY;
+
+        // Mover la pala izquierda o derecha según el movimiento táctil
+        if (currentPlayerCanMove === "left" || currentPlayerCanMove === "both") {
+            leftPaddle.dy = touchDy > 0 ? paddleSpeed : -paddleSpeed;
+        }
+
+        if (currentPlayerCanMove === "right" || currentPlayerCanMove === "both") {
+            rightPaddle.dy = touchDy > 0 ? paddleSpeed : -paddleSpeed;
+        }
+
+        touchStartY = touchY;
+    });
+
+    canvas.addEventListener('touchend', () => {
+        leftPaddle.dy = 0;
+        rightPaddle.dy = 0;
+    });
+}
+
 // Función para iniciar el juego
 function startGame() {
     document.getElementById('menu').style.display = 'none';
@@ -214,14 +244,14 @@ document.getElementById('twoPlayers').addEventListener('click', () => {
     startGame();
 });
 
-// Bucle principal del juego
+// Bucle del juego
 function gameLoop() {
     if (gameStarted) {
         draw();
         move();
-        if (isSinglePlayer) {
-            moveBot();
-        }
+        if (isSinglePlayer) moveBot();
         requestAnimationFrame(gameLoop);
     }
 }
+
+document.getElementById('startButton').addEventListener('click', startGame);
