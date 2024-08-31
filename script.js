@@ -1,44 +1,31 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Detección de dispositivo móvil
-const isMobile = window.innerWidth <= 800 && window.innerHeight <= 600;
-
 // Ajuste del tamaño del canvas
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 // Tamaño y velocidad de los objetos
-let paddleWidth, paddleHeight, ballSize, paddleSpeed, ballSpeed;
+const paddleWidth = 10;
+const paddleHeight = 100;
+const ballSize = 10;
+const paddleSpeed = 5;
+let ballSpeed = 4;
 
-if (isMobile) {
-    paddleWidth = 100;
-    paddleHeight = 10;
-    ballSize = 10;
-    paddleSpeed = 10;
-    ballSpeed = 4;
-} else {
-    paddleWidth = 10;
-    paddleHeight = 100;
-    ballSize = 10;
-    paddleSpeed = 5;
-    ballSpeed = 4;
-}
-
-let topPaddle = {
-    x: canvas.width / 2 - paddleWidth / 2,
-    y: 10,
+let leftPaddle = {
+    x: 10,
+    y: canvas.height / 2 - paddleHeight / 2,
     width: paddleWidth,
     height: paddleHeight,
-    dx: 0
+    dy: 0
 };
 
-let bottomPaddle = {
-    x: canvas.width / 2 - paddleWidth / 2,
-    y: canvas.height - paddleHeight - 10,
+let rightPaddle = {
+    x: canvas.width - paddleWidth - 10,
+    y: canvas.height / 2 - paddleHeight / 2,
     width: paddleWidth,
     height: paddleHeight,
-    dx: 0
+    dy: 0
 };
 
 let ball = {
@@ -49,10 +36,12 @@ let ball = {
     dy: ballSpeed
 };
 
-let topScore = 0;
-let bottomScore = 0;
+let leftScore = 0;
+let rightScore = 0;
 let isSinglePlayer = false; // Indica si el juego es de un solo jugador
 let gameStarted = false;
+let currentPlayerCanMove = "both"; // Permite que ambos jugadores se muevan inicialmente
+let firstHit = false; // Para rastrear si la pelota ha sido golpeada por primera vez
 
 // Función para dibujar los objetos
 function draw() {
@@ -60,8 +49,8 @@ function draw() {
 
     // Dibujar las palas
     ctx.fillStyle = 'white';
-    ctx.fillRect(topPaddle.x, topPaddle.y, topPaddle.width, topPaddle.height);
-    ctx.fillRect(bottomPaddle.x, bottomPaddle.y, bottomPaddle.width, bottomPaddle.height);
+    ctx.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
+    ctx.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
 
     // Dibujar la pelota
     ctx.beginPath();
@@ -71,8 +60,8 @@ function draw() {
 
     // Dibujar el marcador
     ctx.font = '30px Arial';
-    ctx.fillText(`Top: ${topScore}`, 20, 30);
-    ctx.fillText(`Bottom: ${bottomScore}`, canvas.width - 140, 30);
+    ctx.fillText(`Left: ${leftScore}`, 20, 30);
+    ctx.fillText(`Right: ${rightScore}`, canvas.width - 120, 30);
 }
 
 // Función para mover los objetos
@@ -82,56 +71,68 @@ function move() {
     ball.y += ball.dy;
 
     // Colisiones con las paredes
-    if (ball.x + ball.size > canvas.width || ball.x - ball.size < 0) {
-        ball.dx *= -1;
+    if (ball.y + ball.size > canvas.height || ball.y - ball.size < 0) {
+        ball.dy *= -1;
     }
 
     // Colisiones con las palas
-    if (ball.y - ball.size < topPaddle.y + topPaddle.height &&
-        ball.x > topPaddle.x &&
-        ball.x < topPaddle.x + topPaddle.width) {
-        ball.dy *= -1;
-        adjustBallAngle(topPaddle);
+    if (ball.x - ball.size < leftPaddle.x + leftPaddle.width &&
+        ball.y > leftPaddle.y &&
+        ball.y < leftPaddle.y + leftPaddle.height) {
+        ball.dx *= -1;
+        adjustBallAngle(leftPaddle);
+        if (!firstHit) {
+            firstHit = true; // Marca el primer golpe
+            currentPlayerCanMove = "right"; // Turno para el jugador derecho
+        } else {
+            currentPlayerCanMove = "right"; // Cambio de turno
+        }
     }
 
-    if (ball.y + ball.size > bottomPaddle.y &&
-        ball.x > bottomPaddle.x &&
-        ball.x < bottomPaddle.x + bottomPaddle.width) {
-        ball.dy *= -1;
-        adjustBallAngle(bottomPaddle);
+    if (ball.x + ball.size > rightPaddle.x &&
+        ball.y > rightPaddle.y &&
+        ball.y < rightPaddle.y + rightPaddle.height) {
+        ball.dx *= -1;
+        adjustBallAngle(rightPaddle);
+        if (!firstHit) {
+            firstHit = true; // Marca el primer golpe
+            currentPlayerCanMove = "left"; // Turno para el jugador izquierdo
+        } else {
+            currentPlayerCanMove = "left"; // Cambio de turno
+        }
     }
 
     // Reglas del juego
-    if (ball.y + ball.size < 0) {
-        bottomScore++;
+    if (ball.x + ball.size < 0) {
+        rightScore++;
         resetBall();
     }
 
-    if (ball.y - ball.size > canvas.height) {
-        topScore++;
+    if (ball.x - ball.size > canvas.width) {
+        leftScore++;
         resetBall();
     }
 
     // Mover las palas
-    topPaddle.x += topPaddle.dx;
-    bottomPaddle.x += bottomPaddle.dx;
+    leftPaddle.y += leftPaddle.dy;
+    rightPaddle.y += rightPaddle.dy;
 
     // Limitar el movimiento de las palas
-    if (topPaddle.x < 0) topPaddle.x = 0;
-    if (topPaddle.x + topPaddle.width > canvas.width) topPaddle.x = canvas.width - topPaddle.width;
-    if (bottomPaddle.x < 0) bottomPaddle.x = 0;
-    if (bottomPaddle.x + bottomPaddle.width > canvas.width) bottomPaddle.x = canvas.width - bottomPaddle.width;
+    if (leftPaddle.y < 0) leftPaddle.y = 0;
+    if (leftPaddle.y + leftPaddle.height > canvas.height) leftPaddle.y = canvas.height - leftPaddle.height;
+    if (rightPaddle.y < 0) rightPaddle.y = 0;
+    if (rightPaddle.y + rightPaddle.height > canvas.height) rightPaddle.y = canvas.height - rightPaddle.height;
 }
 
 // Función para ajustar el ángulo de la pelota al rebotar en las palas
 function adjustBallAngle(paddle) {
-    let relativeIntersectX = (paddle.x + (paddle.width / 2)) - ball.x;
-    let normalizedRelativeIntersectionX = (relativeIntersectX / (paddle.width / 2));
-    let bounceAngle = normalizedRelativeIntersectionX * Math.PI / 4; // Hasta 45 grados de variación
+    let relativeIntersectY = (paddle.y + (paddle.height / 2)) - ball.y;
+    let normalizedRelativeIntersectionY = (relativeIntersectY / (paddle.height / 2));
+    let bounceAngle = normalizedRelativeIntersectionY * Math.PI / 4; // Hasta 45 grados de variación
 
     // Ajusta la dirección de la pelota según el ángulo calculado
-    ball.dx = -ballSpeed * Math.sin(bounceAngle);
-    ball.dy = ball.dy > 0 ? ballSpeed * Math.cos(bounceAngle) : -ballSpeed * Math.cos(bounceAngle);
+    ball.dy = -ballSpeed * Math.sin(bounceAngle);
+    ball.dx = ball.dx > 0 ? ballSpeed * Math.cos(bounceAngle) : -ballSpeed * Math.cos(bounceAngle);
 }
 
 // Función para reiniciar la pelota
@@ -139,71 +140,55 @@ function resetBall() {
     ball.x = canvas.width / 2;
     ball.y = canvas.height / 2;
     ball.dx *= -1;
+    firstHit = false; // Reinicia el estado de primer golpe
+    currentPlayerCanMove = "both"; // Ambos pueden moverse nuevamente al inicio
 }
 
 // Función para manejar las teclas
 document.addEventListener('keydown', (event) => {
-    switch (event.key) {
-        case 'ArrowLeft':
-            bottomPaddle.dx = -paddleSpeed;
-            break;
-        case 'ArrowRight':
-            bottomPaddle.dx = paddleSpeed;
-            break;
-        case 'a':
-            topPaddle.dx = -paddleSpeed;
-            break;
-        case 'd':
-            topPaddle.dx = paddleSpeed;
-            break;
+    if (currentPlayerCanMove === "left" || currentPlayerCanMove === "both") {
+        switch (event.key) {
+            case 'w':
+                leftPaddle.dy = -paddleSpeed;
+                break;
+            case 's':
+                leftPaddle.dy = paddleSpeed;
+                break;
+        }
+    }
+    if (currentPlayerCanMove === "right" || currentPlayerCanMove === "both") {
+        switch (event.key) {
+            case 'ArrowUp':
+                rightPaddle.dy = -paddleSpeed;
+                break;
+            case 'ArrowDown':
+                rightPaddle.dy = paddleSpeed;
+                break;
+        }
     }
 });
 
 document.addEventListener('keyup', (event) => {
     switch (event.key) {
-        case 'ArrowLeft':
-        case 'ArrowRight':
-            bottomPaddle.dx = 0;
+        case 'ArrowUp':
+        case 'ArrowDown':
+            rightPaddle.dy = 0;
             break;
-        case 'a':
-        case 'd':
-            topPaddle.dx = 0;
+        case 'w':
+        case 's':
+            leftPaddle.dy = 0;
             break;
     }
-});
-
-// Controles táctiles
-let touchStartX = 0;
-
-canvas.addEventListener('touchstart', (event) => {
-    touchStartX = event.touches[0].clientX;
-});
-
-canvas.addEventListener('touchmove', (event) => {
-    const touchX = event.touches[0].clientX;
-    const touchDifference = touchX - touchStartX;
-
-    if (touchDifference < 0) {
-        bottomPaddle.dx = -paddleSpeed;
-    } else if (touchDifference > 0) {
-        bottomPaddle.dx = paddleSpeed;
-    }
-
-    touchStartX = touchX; // Actualiza la posición inicial para el próximo movimiento
-});
-
-canvas.addEventListener('touchend', () => {
-    bottomPaddle.dx = 0; // Detener la raqueta cuando se termina el toque
 });
 
 // Función para mover el bot
 function moveBot() {
-    if (ball.x < topPaddle.x + topPaddle.width / 2) {
-        topPaddle.dx = -paddleSpeed;
-    } else if (ball.x > topPaddle.x + topPaddle.width / 2) {
-        topPaddle.dx = paddleSpeed;
+    if (ball.y < rightPaddle.y + rightPaddle.height / 2) {
+        rightPaddle.dy = -paddleSpeed;
+    } else if (ball.y > rightPaddle.y + rightPaddle.height / 2) {
+        rightPaddle.dy = paddleSpeed;
     } else {
-        topPaddle.dx = 0;
+        rightPaddle.dy = 0;
     }
 }
 
@@ -237,4 +222,3 @@ function gameLoop() {
         requestAnimationFrame(gameLoop);
     }
 }
-
