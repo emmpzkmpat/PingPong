@@ -9,8 +9,8 @@ canvas.height = window.innerHeight;
 const paddleWidth = 10;
 const paddleHeight = 100;
 const ballSize = 10;
-const paddleSpeed = 5;
-let ballSpeed = 4;
+const paddleSpeed = 9;
+let ballSpeed = 10;
 
 let leftPaddle = {
     x: 10,
