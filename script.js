@@ -10,9 +10,9 @@ const isMobile = window.innerWidth < 768; // Puedes ajustar el valor según nece
 
 // Tamaño y velocidad de los objetos según el dispositivo
 const paddleWidth = isMobile ? 4 : 10;
-const paddleHeight = isMobile ? 120 : 100;
+const paddleHeight = isMobile ? 140 : 100;
 const ballSize = isMobile ? 8 : 10;
-const paddleSpeed = isMobile ? 6 : 9;
+const paddleSpeed = isMobile ? 7 : 9;
 let ballSpeed = isMobile ? 5 : 10;
 
 let leftPaddle = {
